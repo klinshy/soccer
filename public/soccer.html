@@ -11,7 +11,7 @@
 		</html>
     </head>
     <body style="background-color:#00000000; margin:0px; padding:0px">
-		<svg id="spielfeld" width="799" height="560" alt="Spielfeld - leider nur optisch" style="margin: 0px; padding: 0px"  xmlns="http://www.w3.org/2000/svg">
+		<svg id="spielfeld" width="654" height="490" alt="Spielfeld - leider nur optisch" style="margin: 0px; padding: 0px"  xmlns="http://www.w3.org/2000/svg">
 			<style>
 				.goalCounter {
 					font: bold 30px sans-serif;
@@ -36,7 +36,7 @@ let svgElement = document.getElementById('spielfeld');
 // helper to play Ball Games
 async function startBallGame(ballGameDef ) {
 	let myName = WA.player.name;
-	let ballImpulse = 18.0;
+	let ballImpulse = 14.0;
 	let ballSlowdown = 0.72;
 	let ballMoveImpulse = 0.0;
 	let ballMoveDirection = 0.0;
