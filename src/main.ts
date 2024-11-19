@@ -32,5 +32,21 @@ function closePopup(){
         currentPopup = undefined;
     }
 }
+const colors = [
+    { red: 255, green: 0, blue: 0 },
+    { red: 0, green: 0, blue: 255 }
+];
+let colorIndex = 0;
 
+WA.onInit().then(async () => {
+    WA.room.area.onEnter("aFeld").subscribe(() => {
+        const selectedColor = colors[colorIndex];
+        WA.player.setOutlineColor(selectedColor.red, selectedColor.green, selectedColor.blue);
+        colorIndex = (colorIndex + 1) % colors.length; // Toggle between 0 and 1
+    });
+
+    WA.room.area.onLeave("aFeld").subscribe(() => {
+        WA.player.removeOutlineColor();
+    });
+});
 export {};
