@@ -1,11 +1,17 @@
+/// <reference types="@workadventure/iframe-api-typings" />
+
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
     <head>
         <title>BWI WorkAdventure Soccer</title>
-		<script src="/iframe_api.js"></script>
+				<script src="https://play.workadventu.re/iframe_api.js"></script>
+			</head>
+			<body>
+			</body>
+		</html>
     </head>
     <body style="background-color:#00000000; margin:0px; padding:0px">
-		<svg id="spielfeld" width="1340" height="828" alt="Spielfeld - leider nur optisch" style="margin: 0px, padding: 0px"  xmlns="http://www.w3.org/2000/svg">
+		<svg id="spielfeld" width="799" height="560" alt="Spielfeld - leider nur optisch" style="margin: 0px; padding: 0px"  xmlns="http://www.w3.org/2000/svg">
 			<style>
 				.goalCounter {
 					font: bold 30px sans-serif;
@@ -123,6 +129,11 @@ async function startBallGame(ballGameDef ) {
 		if ((dist < 18) && (!isGoal)) {
 			let lastMovement = JSON.parse(WA.state.loadVariable(ballGameDef.ballVariable));
 			console.info('BWI SoccerSkript: checkCollision - lastMovement: ', lastMovement);
+				// Play random kick sound
+				const kickSounds = ["kick1.wav", "kick2.wav", "kick3.wav"];
+					const randomSound = kickSounds[Math.floor(Math.random() * kickSounds.length)];
+					const audio = new Audio(randomSound);
+					audio.play();
 			if ((lastMovement.lastHit+millisBallDebounce) < Date.now()) {
 				ballMoveDirection = Math.atan2((playerPos.y - field.y) - (ballY + ballCenterY), (playerPos.x - field.x) - (ballX + ballCenterX)) - (Math.PI/2);
 				console.info('BWI SoccerSkript: checkCollision - ballMoveDirection: ',ballMoveDirection);
@@ -151,12 +162,14 @@ async function startBallGame(ballGameDef ) {
 			ballX += Math.sin(ballMoveDirection)*ballMoveImpulse;
 			ballY -= Math.cos(ballMoveDirection)*ballMoveImpulse;
 //			console.info('BWI SoccerSkript: moveBall nextPos should be ',ballMoveDirection,ballMoveImpulse,ballX, ballY);
+
 			if (activeController == myName) {
 				let goalIn = undefined;
 				for (const goal in ballGameDef.goalAreas) {
 					const checkGoal = await checkIfWithinBoundariesOfArea(ballX+ballCenterX, ballY+ballCenterY, ballGameDef.goalAreas[goal]);
 //					console.info('BWI SoccerSkript: moveBall checkGoal goal:' + goal + ' = ' + checkGoal);
 					if (checkGoal == true) goalIn = goal;
+					
 				}
 				if (goalIn != undefined) {
 					console.info('BWI SoccerSkript: goal detected - saveVariable after goal');
@@ -164,6 +177,10 @@ async function startBallGame(ballGameDef ) {
 					goalAt = Date.now();
 					goals[goalIn] += 1;
 					ballMoveImpulse = 0;
+					const goalSounds = ["crowd.wav", "crowd2.wav", "crowd3.wav", "crowd4.wav", "crowd5.wav"];
+					const randomGoalSound = goalSounds[Math.floor(Math.random() * goalSounds.length)];
+					const goalAudio = new Audio(randomGoalSound);
+					goalAudio.play();
 					WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":0, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"goal", "goalsIn":goals  }));
 				}
 			}
@@ -187,6 +204,7 @@ async function startBallGame(ballGameDef ) {
 				ballMoveImpulse -= ballSlowdown;
 			}
 			setBallPosition();
+			
 		} else {
 			ballMoving = false;
 			if (activeController == myName) {
@@ -238,10 +256,10 @@ async function startBallGame(ballGameDef ) {
 	console.info("BWI SoccerSkript: startBallGame gesetzt.");
 }
 
-WA.onInit().then(async () => {
+//WA.onInit().then(async () => {
 //	await startBallGame({"ballVariable": "vBall", "ballControllerVariable":"vBallController", "gameArea":"webSoccerGame", "ballArea":"aFeld", "goalAreas":["aTorLinks","aTorRechts"]});
 	await startBallGame({"ballVariable": "vBall", "gameArea":"webSoccerGame", "ballArea":"aFeld", "goalAreas":["aTorLinks","aTorRechts"]});
-});
+//});
             
         </script>
     </body>
