@@ -466,7 +466,7 @@
         {
          "name":"mapLink",
          "type":"string",
-         "value":"https:\/\/play-workadventure.innoxlab.de\/_\/global\/maps-workadventure.innoxlab.de\/Kopiervorlage\/map.json#start"
+         "value":""
         }, 
         {
          "name":"mapName",
