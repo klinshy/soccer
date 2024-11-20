@@ -303,7 +303,7 @@
                  "y":235.176075678975
                 }, 
                 {
-                 "height":560,
+                 "height":608,
                  "id":51,
                  "name":"webSoccerGame",
                  "properties":[
@@ -325,9 +325,9 @@
                  "rotation":0,
                  "type":"website",
                  "visible":true,
-                 "width":799,
-                 "x":322.056037451279,
-                 "y":191.663997758017
+                 "width":832,
+                 "x":307.824071230769,
+                 "y":176.51352602742
                 }, 
                 {
                  "height":128,
