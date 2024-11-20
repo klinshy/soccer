@@ -231,7 +231,7 @@ async function startBallGame(ballGameDef ) {
 					goalAt = Date.now();
 					goals[goalIn] += 1;
 					ballMoveImpulse = 0;
-					const goalSounds = ["crowd2.wav", "crowd3.wav", "crowd4.wav", "crowd5.wav"];
+					const goalSounds = ["crowd.wav", "crowd2.wav", "crowd3.wav", "crowd4.wav", "crowd5.wav"];
 					const randomGoalSound = goalSounds[Math.floor(Math.random() * goalSounds.length)];
 					var mySound = WA.sound.loadSound(randomGoalSound);
 					var goalCrowd = {
