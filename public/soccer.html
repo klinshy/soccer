@@ -26,7 +26,7 @@
 			<circle id="ballPointer" cx="50" cy="50" r="0.5" style="fill:blue" />
 		</svg>
 		<script>
-		
+	//"spielfeld" width="847" height="567"	
 let ball = document.getElementById('ball');
 let playerPointer = document.getElementById('playerPointer');
 let ballPointer = document.getElementById('ballPointer');
@@ -52,6 +52,30 @@ document.addEventListener('click', function(event) {
 });});
 // helper to play Ball Games
 async function startBallGame(ballGameDef ) {
+	const kickSounds = [WA.sound.loadSound("kick1.wav"), WA.sound.loadSound("kick2.wav"), WA.sound.loadSound("kick3.wav")]
+				const randomKickSound = kickSounds[Math.floor(Math.random() * kickSounds.length)];
+				var kickingSound = WA.sound.loadSound(randomKickSound);
+					const kickConfig = {
+					volume: 0.25,
+					loop: false,
+					rate: 1,
+					detune: 1,
+					delay: 0,
+					seek: 0,
+					mute: false
+				};
+				const goalSounds = [WA.sound.loadSound("crowd2.wav"), WA.sound.loadSound("crowd3.wav"), WA.sound.loadSound("crowd4.wav"), WA.sound.loadSound("crowd5.wav")];
+					const randomGoalSound = goalSounds[Math.floor(Math.random() * goalSounds.length)];
+					var crowdSounds = WA.sound.loadSound(randomGoalSound);
+				const crowdConfig = {
+						volume: 0.15,
+						loop: false,
+						rate: 1,
+						detune: 1,
+						delay: 0,
+						seek: 0,
+						mute: false
+					};
 	let myName = WA.player.name;
 	let ballImpulse = 14.0;
 	let ballSlowdown = 0.72;
@@ -175,19 +199,8 @@ async function startBallGame(ballGameDef ) {
 			let lastMovement = JSON.parse(WA.state.loadVariable(ballGameDef.ballVariable));
 			console.info('SoccerSkript: checkCollision - lastMovement: ', lastMovement);
 				// Play random kick sound
-				const kickSounds = ["kick1.wav", "kick2.wav", "kick3.wav"];
-				const randomSound = kickSounds[Math.floor(Math.random() * kickSounds.length)];
-				var mySound = WA.sound.loadSound(randomSound);
-				var kicking = {
-					volume: 0.25,
-					loop: false,
-					rate: 1,
-					detune: 1,
-					delay: 0,
-					seek: 0,
-					mute: false
-				};
-				mySound.play(kicking);
+				kickSounds[Math.floor(Math.random() * kickSounds.length)].play(kickConfig);
+
 			if ((lastMovement.lastHit+millisBallDebounce) < Date.now()) {
 				ballMoveDirection = Math.atan2((playerPos.y - field.y) - (ballY + ballCenterY), (playerPos.x - field.x) - (ballX + ballCenterX)) - (Math.PI/2);
 				console.info('SoccerSkript: checkCollision - ballMoveDirection: ',ballMoveDirection);
@@ -231,19 +244,9 @@ async function startBallGame(ballGameDef ) {
 					goalAt = Date.now();
 					goals[goalIn] += 1;
 					ballMoveImpulse = 0;
-					const goalSounds = ["crowd.wav", "crowd2.wav", "crowd3.wav", "crowd4.wav", "crowd5.wav"];
-					const randomGoalSound = goalSounds[Math.floor(Math.random() * goalSounds.length)];
-					var mySound = WA.sound.loadSound(randomGoalSound);
-					var goalCrowd = {
-						volume: 0.15,
-						loop: false,
-						rate: 1,
-						detune: 1,
-						delay: 0,
-						seek: 0,
-						mute: false
-					};
-					mySound.play(goalCrowd);
+					
+					
+					goalSounds[Math.floor(Math.random() * goalSounds.length)].play(crowdConfig)
 					WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":0, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"goal", "goalsIn":goals  }));
 				}
 			}
