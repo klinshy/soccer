@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>BWI WorkAdventure Soccer</title>
+        <title>WorkAdventure Soccer</title>
 				<script src="https://play.workadventu.re/iframe_api.js"></script>
 			</head>
 			<body>
@@ -21,7 +21,7 @@
 				}
 			</style>
 			<image x="100px" y="100px" id="ball" href="fussball.png" width="24px" height="24px" stroke="none"/>
-			<image x="591px" y="20px" id="ball_reset" href="fussball.png" width="18px" height="18px" stroke="none"/>
+			<image x="591px" y="20px" id="ball_reset" href="empty.png" width="18px" height="18px" stroke="none"/>
 			<circle id="playerPointer" cx="50" cy="50" r="0.5" style="fill:red" />
 			<circle id="ballPointer" cx="50" cy="50" r="0.5" style="fill:blue" />
 		</svg>
@@ -32,7 +32,24 @@ let playerPointer = document.getElementById('playerPointer');
 let ballPointer = document.getElementById('ballPointer');
 let ballReset = document.getElementById('ball_reset');
 let svgElement = document.getElementById('spielfeld');
-
+document.addEventListener('click', function(event) {
+	WA.ui.actionBar.addButton({
+        id: 'unstuck',
+        label: '🆘 unstuck me',
+        callback: (event) => {
+            console.log('Button clicked', event);
+            // When a user clicks on the action bar button 'Register', we remove it.
+            WA.ui.actionBar.removeButton('unstuck');
+        }
+    });
+	WA.ui.banner.openBanner({
+    id: "unstucking",
+    text: "When clicking on the field, you cant move anymore. Click here to get unstuck.",
+    bgColor: "#000000",
+    textColor: "#ffffff",
+    closable: true,
+    timeToClose: 10000
+});});
 // helper to play Ball Games
 async function startBallGame(ballGameDef ) {
 	let myName = WA.player.name;
@@ -68,6 +85,7 @@ async function startBallGame(ballGameDef ) {
 	function showScore() {
 		for (const goal in goals) {
 			goalCounter[goal].textContent = goals[goal];
+			
 		}
 	}
 
@@ -76,9 +94,36 @@ async function startBallGame(ballGameDef ) {
 	let ballY = 100.0;
 	let isGoal = false;
 	let goalSince = 0;
+	const svgIcon = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%2363E6BE" d="M386.3 160L336 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-128c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 51.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0s-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3s163.8-62.5 226.3 0L386.3 160z"/></svg>';
+	WA.ui.actionBar.addButton({
+        id: 'reset-btn',
+		type: 'action',
+		imageSrc: svgIcon,
+		toolTip: 'Reset the ball',
+        callback: (event) => {
+            ballX = (ballBounceMinX+ballBounceMaxX)/2-ballCenterX;
+		ballY = (ballBounceMinY+ballBounceMaxY)/2-ballCenterY;
+		ballMoveImpulse = 0;
+		isGoal = false;
+		goals = new Array(ballGameDef.goalAreas.length);
+		goals.fill(0);
+		WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":0, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"none", "goalsIn":goals }));
+		var mySound = WA.sound.loadSound("whistle.wav");
+		var config = {
+			volume: 0.25,
+			loop: false,
+			rate: 1,
+			detune: 1,
+			delay: 0,
+			seek: 0,
+			mute: false
+		};
+		mySound.play(config);
+	}
+    });
 	ballReset.addEventListener("click", function(event){
       // You can now call your desired function and pass the event and your argument
-		console.info('BWI SoccerSkript: reset button');
+		console.info('SoccerSkript: reset button');
 		ballX = (ballBounceMinX+ballBounceMaxX)/2-ballCenterX;
 		ballY = (ballBounceMinY+ballBounceMaxY)/2-ballCenterY;
 		ballMoveImpulse = 0;
@@ -125,18 +170,27 @@ async function startBallGame(ballGameDef ) {
 		const deltaY = (playerPos.y - field.y) - (ballY + ballCenterY);
 		const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
 		setMarkerPosition(ballX + ballCenterX, ballY + ballCenterY, playerPos.x - field.x, playerPos.y - field.y);
-//		console.info('BWI SoccerSkript: checkCollision: ', playerPos, field, deltaX, deltaY, dist);
+//		console.info('SoccerSkript: checkCollision: ', playerPos, field, deltaX, deltaY, dist);
 		if ((dist < 18) && (!isGoal)) {
 			let lastMovement = JSON.parse(WA.state.loadVariable(ballGameDef.ballVariable));
-			console.info('BWI SoccerSkript: checkCollision - lastMovement: ', lastMovement);
+			console.info('SoccerSkript: checkCollision - lastMovement: ', lastMovement);
 				// Play random kick sound
 				const kickSounds = ["kick1.wav", "kick2.wav", "kick3.wav"];
-					const randomSound = kickSounds[Math.floor(Math.random() * kickSounds.length)];
-					const audio = new Audio(randomSound);
-					audio.play();
+				const randomSound = kickSounds[Math.floor(Math.random() * kickSounds.length)];
+				var mySound = WA.sound.loadSound(randomSound);
+				var kicking = {
+					volume: 0.25,
+					loop: false,
+					rate: 1,
+					detune: 1,
+					delay: 0,
+					seek: 0,
+					mute: false
+				};
+				mySound.play(kicking);
 			if ((lastMovement.lastHit+millisBallDebounce) < Date.now()) {
 				ballMoveDirection = Math.atan2((playerPos.y - field.y) - (ballY + ballCenterY), (playerPos.x - field.x) - (ballX + ballCenterX)) - (Math.PI/2);
-				console.info('BWI SoccerSkript: checkCollision - ballMoveDirection: ',ballMoveDirection);
+				console.info('SoccerSkript: checkCollision - ballMoveDirection: ',ballMoveDirection);
 				activeController = myName;
 				WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":ballImpulse, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"kick", "goalsIn":goals }));
 			}
@@ -158,29 +212,38 @@ async function startBallGame(ballGameDef ) {
 		if (ballMoveImpulse>ballSlowdown) {
 			ballMoving = true;
 			setTimeout(moveBall, 50);
-//			console.info('BWI SoccerSkript: moveBall ',ballMoveDirection,ballMoveImpulse,ballX, ballY);
+//			console.info('SoccerSkript: moveBall ',ballMoveDirection,ballMoveImpulse,ballX, ballY);
 			ballX += Math.sin(ballMoveDirection)*ballMoveImpulse;
 			ballY -= Math.cos(ballMoveDirection)*ballMoveImpulse;
-//			console.info('BWI SoccerSkript: moveBall nextPos should be ',ballMoveDirection,ballMoveImpulse,ballX, ballY);
+//			console.info('SoccerSkript: moveBall nextPos should be ',ballMoveDirection,ballMoveImpulse,ballX, ballY);
 
 			if (activeController == myName) {
 				let goalIn = undefined;
 				for (const goal in ballGameDef.goalAreas) {
 					const checkGoal = await checkIfWithinBoundariesOfArea(ballX+ballCenterX, ballY+ballCenterY, ballGameDef.goalAreas[goal]);
-//					console.info('BWI SoccerSkript: moveBall checkGoal goal:' + goal + ' = ' + checkGoal);
+//					console.info('SoccerSkript: moveBall checkGoal goal:' + goal + ' = ' + checkGoal);
 					if (checkGoal == true) goalIn = goal;
 					
 				}
 				if (goalIn != undefined) {
-					console.info('BWI SoccerSkript: goal detected - saveVariable after goal');
+					console.info('SoccerSkript: goal detected - saveVariable after goal');
 					isGoal = true;
 					goalAt = Date.now();
 					goals[goalIn] += 1;
 					ballMoveImpulse = 0;
 					const goalSounds = ["crowd.wav", "crowd2.wav", "crowd3.wav", "crowd4.wav", "crowd5.wav"];
 					const randomGoalSound = goalSounds[Math.floor(Math.random() * goalSounds.length)];
-					const goalAudio = new Audio(randomGoalSound);
-					goalAudio.play();
+					var mySound = WA.sound.loadSound(randomGoalSound);
+					var goalCrowd = {
+						volume: 0.25,
+						loop: false,
+						rate: 1,
+						detune: 1,
+						delay: 0,
+						seek: 0,
+						mute: false
+					};
+					mySound.play(goalCrowd);
 					WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":0, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"goal", "goalsIn":goals  }));
 				}
 			}
@@ -209,11 +272,11 @@ async function startBallGame(ballGameDef ) {
 			ballMoving = false;
 			if (activeController == myName) {
 				if (!isGoal) {
-					console.info('BWI SoccerSkript: saveVariable after kick is over');
+					console.info('SoccerSkript: saveVariable after kick is over');
 					WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":0, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"none", "goalsIn":goals }));
 				} else {
 					if (goalAt + goalWaitTime < Date.now()) {
-						console.info('BWI SoccerSkript: saveVariable for reset');
+						console.info('SoccerSkript: saveVariable for reset');
 						ballX = (ballBounceMinX+ballBounceMaxX)/2-ballCenterX;
 						ballY = (ballBounceMinY+ballBounceMaxY)/2-ballCenterY;
 						ballMoveImpulse = 0;
@@ -237,7 +300,7 @@ async function startBallGame(ballGameDef ) {
 		goals = newMovement.goalsIn;
 		isGoal = (newMovement.action=='goal');
 		showScore();
-		console.info('BWI SoccerSkript: checkVariable - read new values:',value);
+		console.info('SoccerSkript: checkVariable - read new values:',value);
 
 		if (!ballMoving) {
 			if (ballMoveImpulse!=0) {
@@ -253,12 +316,13 @@ async function startBallGame(ballGameDef ) {
 	await checkVariable(WA.state.loadVariable(ballGameDef.ballVariable));
 	setInterval(checkCollision, 50);
 
-	console.info("BWI SoccerSkript: startBallGame gesetzt.");
+	console.info("SoccerSkript: startBallGame gesetzt.");
 }
 
 WA.onInit().then(async () => {
 //	await startBallGame({"ballVariable": "vBall", "ballControllerVariable":"vBallController", "gameArea":"webSoccerGame", "ballArea":"aFeld", "goalAreas":["aTorLinks","aTorRechts"]});
 	await startBallGame({"ballVariable": "vBall", "gameArea":"webSoccerGame", "ballArea":"aFeld", "goalAreas":["aTorLinks","aTorRechts"]});
+	WA.ui.actionBar.removeButton('invite-btn')
 });
             
         </script>

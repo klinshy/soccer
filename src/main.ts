@@ -48,5 +48,11 @@ WA.onInit().then(async () => {
     WA.room.area.onLeave("aFeld").subscribe(() => {
         WA.player.removeOutlineColor();
     });
+    WA.controls.disableWheelZoom();
+    WA.controls.disableRightClick();
+    WA.controls.disableRoomList();
+    WA.controls.disableMapEditor();
 });
+
+
 export {};
