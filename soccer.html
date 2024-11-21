@@ -11,13 +11,13 @@
 		</html>
     </head>
     <body style="background-color:#00000000; margin:0px; padding:0px">
-		<svg id="spielfeld" width="864" height="585" alt="Spielfeld - optisch" style="margin: 0px; padding: 0px"  xmlns="http://www.w3.org/2000/svg">  
+		<svg id="spielfeld" width="864" height="586" alt="Spielfeld - leider nur optisch" style="margin: 0px; padding: 0px"  xmlns="http://www.w3.org/2000/svg">
 			<style>a
 				.goalCounter {
 					font: bold 30px sans-serif;
 					fill: black;
 					text-anchor: middle; 
-					alignment-baseline: central;
+					dominant-baseline: central;
 				}
 			</style>
 			<image x="100px" y="100px" id="ball" href="fussball.png" width="24px" height="24px" stroke="none"/>
@@ -189,32 +189,33 @@ async function startBallGame(ballGameDef ) {
 	}
 	
 	async function checkCollision() {
-		const playerPos = await WA.player.getPosition();
-		const deltaX = (playerPos.x - field.x) - (ballX + ballCenterX);
-		const deltaY = (playerPos.y - field.y) - (ballY + ballCenterY);
-		const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-		setMarkerPosition(ballX + ballCenterX, ballY + ballCenterY, playerPos.x - field.x, playerPos.y - field.y);
-//		console.info('SoccerSkript: checkCollision: ', playerPos, field, deltaX, deltaY, dist);
-		if ((dist < 18) && (!isGoal)) {
-			let lastMovement = JSON.parse(WA.state.loadVariable(ballGameDef.ballVariable));
-			console.info('SoccerSkript: checkCollision - lastMovement: ', lastMovement);
-				// Play random kick sound
-				kickSounds[Math.floor(Math.random() * kickSounds.length)].play(kickConfig);
+    const playerPos = await WA.player.getPosition();
+    const adjustedPlayerY = playerPos.y - 4; // Adjust the player's y-coordinate by 16px
+    const deltaX = (playerPos.x - field.x) - (ballX + ballCenterX);
+    const deltaY = (adjustedPlayerY - field.y) - (ballY + ballCenterY); // Use the adjusted y-coordinate
+    const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    setMarkerPosition(ballX + ballCenterX, ballY + ballCenterY, playerPos.x - field.x, adjustedPlayerY - field.y); // Use the adjusted y-coordinate
 
-			if ((lastMovement.lastHit+millisBallDebounce) < Date.now()) {
-				ballMoveDirection = Math.atan2((playerPos.y - field.y) - (ballY + ballCenterY), (playerPos.x - field.x) - (ballX + ballCenterX)) - (Math.PI/2);
-				console.info('SoccerSkript: checkCollision - ballMoveDirection: ',ballMoveDirection);
-				activeController = myName;
-				WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":ballImpulse, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"kick", "goalsIn":goals }));
-			}
-		}
-	}
+    if ((dist < 18) && (!isGoal)) {
+		let lastMovement = JSON.parse(await WA.state.loadVariable(ballGameDef.ballVariable));
+        console.info('SoccerSkript: checkCollision - lastMovement: ', lastMovement);
+        // Play random kick sound
+        kickSounds[Math.floor(Math.random() * kickSounds.length)].play(kickConfig);
+
+        if ((lastMovement.lastHit + millisBallDebounce) < Date.now()) {
+            ballMoveDirection = Math.atan2((adjustedPlayerY - field.y) - (ballY + ballCenterY), (playerPos.x - field.x) - (ballX + ballCenterX)) - (Math.PI / 2);
+            console.info('SoccerSkript: checkCollision - ballMoveDirection: ', ballMoveDirection);
+            activeController = myName;
+            WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({ "x": ballX, "y": ballY, "impulse": ballImpulse, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "kick", "goalsIn": goals }));
+        }
+    }
+}
 
 	function setMarkerPosition(bx, by, px, py) {
 		ballPointer.setAttribute("cx",bx);
 		ballPointer.setAttribute("cy",by);
 		playerPointer.setAttribute("cx",px);
-		playerPointer.setAttribute("cy",py);
+		playerPointer.setAttribute("cy",py - 4);
 	}
 	function setBallPosition() {
 		ball.setAttribute("x",ballX);
