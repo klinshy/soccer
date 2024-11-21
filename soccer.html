@@ -7,13 +7,12 @@
 		<script src="https://play.workadventu.re/iframe_api.js"></script>
 	</head>
 	<body style="background-color:#00000000; margin:0px; padding:0px"></body>
-		<svg id="spielfeld" width="864" height="586" alt="Spielfeld - leider nur optisch" style="margin: 0px; padding: 0px"  xmlns="http://www.w3.org/2000/svg">
+		<svg id="spielfeld" width="864" height="586" alt="Spielfeld - leider nur optisch" style="margin: 0px; padding: 0px" xmlns="http://www.w3.org/2000/svg">
 			<style>
 				.goalCounter {
 					font: bold 30px sans-serif;
 					fill: black;
-					text-anchor: middle; 
-					alignment-baseline: central;
+					text-anchor: middle;
 				}
 			</style>
 			<image x="100px" y="100px" id="ball" href="fussball.png" width="24px" height="24px" stroke="none"/>
@@ -27,7 +26,6 @@
 			let ballPointer = document.getElementById('ballPointer');
 			let ballReset = document.getElementById('ball_reset');
 			let svgElement = document.getElementById('spielfeld');
-			let activeController = "";
 
 			document.addEventListener('click', function(event) {
 				WA.ui.actionBar.addButton({
@@ -94,51 +92,54 @@
 					imageSrc: svgIcon,
 					toolTip: 'Reset the ball',
 					callback: (event) => {
-						resetBall();
+						ballX = (ballBounceMinX+ballBounceMaxX)/2-ballCenterX;
+						ballY = (ballBounceMinY+ballBounceMaxY)/2-ballCenterY;
+						ballMoveImpulse = 0;
+						isGoal = false;
+						goals = new Array(ballGameDef.goalAreas.length);
+						goals.fill(0);
+						WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":0, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"none", "goalsIn":goals }));
+						var mySound = WA.sound.loadSound("whistle.wav");
+						var config = {
+							volume: 0.25,
+							loop: false,
+							rate: 1,
+							detune: 1,
+							delay: 0,
+							seek: 0,
+							mute: false
+						};
+						mySound.play(config);
 					}
 				});
-				ballReset.addEventListener("click", function(event){
-					resetBall();
-				});
 
-				function resetBall() {
-					ballX = (ballBounceMinX + ballBounceMaxX) / 2 - ballCenterX;
-					ballY = (ballBounceMinY + ballBounceMaxY) / 2 - ballCenterY;
+				ballReset.addEventListener("click", function(event){
+					console.info('SoccerSkript: reset button');
+					ballX = (ballBounceMinX+ballBounceMaxX)/2-ballCenterX;
+					ballY = (ballBounceMinY+ballBounceMaxY)/2-ballCenterY;
 					ballMoveImpulse = 0;
 					isGoal = false;
 					goals = new Array(ballGameDef.goalAreas.length);
 					goals.fill(0);
-					activeController = "";
-					WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x": ballX, "y": ballY, "impulse": 0, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "none", "goalsIn": goals }));
-					var mySound = WA.sound.loadSound("whistle.wav");
-					var config = {
-						volume: 0.25,
-						loop: false,
-						rate: 1,
-						detune: 1,
-						delay: 0,
-						seek: 0,
-						mute: false
-					};
-					mySound.play(config);
-				}
+					WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x":ballX, "y":ballY, "impulse":0, "direction":ballMoveDirection, "controller":myName, "lastHit":Date.now(), "action":"none", "goalsIn":goals }));
+				});
 
-				const ballCenterX = (ballWidth) / 2;
-				const ballCenterY = (ballHeight) / 2;
+				const ballCenterX = (ballWidth / 2);
+				const ballCenterY = (ballHeight / 2);
 				const ballBounceMinX = ballBounceBox.x - field.x;
 				const ballBounceMinY = ballBounceBox.y - field.y;
 				const ballBounceMaxX = ballBounceMinX + ballBounceBox.width;
 				const ballBounceMaxY = ballBounceMinY + ballBounceBox.height;
-
+				let activeController = "";
 				const area = WA.room.area.create({
 					name: 'ballGameFocus',
 					x: field.x,
 					y: field.y,
 					width: field.width,
 					height: field.height,
-				});	
+				});
 				WA.room.area.onEnter("ballGameFocus").subscribe(() => {
-					WA.camera.set(field.x + (field.width / 2), field.y + (field.height / 2), (field.width + 2 * viewPortXExtend), field.height, true, true, 1500);
+					WA.camera.set(field.x + (field.width/2), field.y + (field.height/2), (field.width+2*viewPortXExtend), field.height, true, true, 1500);
 				});
 
 				WA.room.area.onLeave("ballGameFocus").subscribe(() => {
@@ -147,10 +148,10 @@
 
 				async function checkIfWithinBoundariesOfArea(x, y, areaName) {
 					const areaOfInterest = await WA.room.area.get(areaName);
-					if (x < areaOfInterest.x - field.x) return false;
-					if (y < areaOfInterest.y - field.y) return false;
-					if (x > (areaOfInterest.x - field.x + areaOfInterest.width)) return false;
-					if (y > (areaOfInterest.y - field.y + areaOfInterest.height)) return false;
+					if (x < areaOfInterest.x-field.x) return false;
+					if (y < areaOfInterest.y-field.y) return false;
+					if (x > (areaOfInterest.x-field.x + areaOfInterest.width)) return false;
+					if (y > (areaOfInterest.y-field.y + areaOfInterest.height)) return false;
 					return true;
 				}
 
@@ -163,16 +164,15 @@
 					setMarkerPosition(ballX + ballCenterX, ballY + ballCenterY, playerPos.x - field.x, adjustedPlayerY - field.y);
 
 					if ((dist < 18) && (!isGoal)) {
-						let lastMovement = JSON.parse(await WA.state.loadVariable(ballGameDef.ballVariable));
+						let lastMovement = JSON.parse(WA.state.loadVariable(ballGameDef.ballVariable));
 						console.info('SoccerSkript: checkCollision - lastMovement: ', lastMovement);
-						kickSounds[Math.floor(Math.random() * kickSounds.length)].play(kickConfig);
+						kickSounds[Math.floor(Math.random() * kickSounds.length)].play({ volume: 0.25, loop: false, rate: 1, detune: 1, delay: 0, seek: 0, mute: false });
 
-						if ((lastMovement.lastHit + millisBallDebounce) < Date.now() || activeController !== myName) {
+						if ((lastMovement.lastHit + millisBallDebounce) < Date.now()) {
 							ballMoveDirection = Math.atan2((adjustedPlayerY - field.y) - (ballY + ballCenterY), (playerPos.x - field.x) - (ballX + ballCenterX)) - (Math.PI / 2);
 							console.info('SoccerSkript: checkCollision - ballMoveDirection: ', ballMoveDirection);
 							activeController = myName;
-							ballMoveImpulse = ballImpulse; // Ensure the ball impulse is set correctly
-							WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({ "x": ballX, "y": ballY, "impulse": ballMoveImpulse, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "kick", "goalsIn": goals }));
+							WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({ "x": ballX, "y": ballY, "impulse": ballImpulse, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "kick", "goalsIn": goals }));
 						}
 					}
 				}
@@ -208,8 +208,8 @@
 								goalAt = Date.now();
 								goals[goalIn] += 1;
 								ballMoveImpulse = 0;
-								goalSounds[Math.floor(Math.random() * goalSounds.length)].play(crowdConfig);
-								WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x": ballX, "y": ballY, "impulse": 0, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "goal", "goalsIn": goals }));
+								goalSounds[Math.floor(Math.random() * goalSounds.length)].play({ volume: 0.15, loop: false, rate: 1, detune: 1, delay: 0, seek: 0, mute: false });
+								WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({ "x": ballX, "y": ballY, "impulse": 0, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "goal", "goalsIn": goals }));
 							}
 						}
 						if (!isGoal) {
@@ -226,7 +226,7 @@
 								ballMoveDirection = -ballMoveDirection;
 							}
 							if (ballY + ballCenterY > ballBounceMaxY) {
-								ballY -= ((ballY + ballCenterX) - ballBounceMaxY);
+								ballY -= ((ballY + ballCenterY) - ballBounceMaxY);
 								ballMoveDirection = -(ballMoveDirection + Math.PI);
 							}
 							ballMoveImpulse -= ballSlowdown;
@@ -237,7 +237,7 @@
 						if (activeController == myName) {
 							if (!isGoal) {
 								console.info('SoccerSkript: saveVariable after kick is over');
-								WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x": ballX, "y": ballY, "impulse": 0, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "none", "goalsIn": goals }));
+								WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({ "x": ballX, "y": ballY, "impulse": 0, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "none", "goalsIn": goals }));
 							} else {
 								if (goalAt + goalWaitTime < Date.now()) {
 									console.info('SoccerSkript: saveVariable for reset');
@@ -245,7 +245,7 @@
 									ballY = (ballBounceMinY + ballBounceMaxY) / 2 - ballCenterY;
 									ballMoveImpulse = 0;
 									isGoal = false;
-									WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({"x": ballX, "y": ballY, "impulse": 0, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "none", "goalsIn": goals }));
+									WA.state.saveVariable(ballGameDef.ballVariable, JSON.stringify({ "x": ballX, "y": ballY, "impulse": 0, "direction": ballMoveDirection, "controller": myName, "lastHit": Date.now(), "action": "none", "goalsIn": goals }));
 								} else {
 									setTimeout(moveBall, 50);
 								}
@@ -284,8 +284,8 @@
 			}
 
 			WA.onInit().then(async () => {
-				await startBallGame({"ballVariable": "vBall", "gameArea": "webSoccerGame", "ballArea": "aFeld", "goalAreas": ["aTorLinks", "aTorRechts"]});
-				WA.ui.actionBar.removeButton('invite-btn');
+				await startBallGame({ "ballVariable": "vBall", "gameArea": "webSoccerGame", "ballArea": "aFeld", "goalAreas": ["aTorLinks", "aTorRechts"] });
+				WA.ui.actionBar.removeButton('invite-btn')
 			});
 		</script>
 	</body>
